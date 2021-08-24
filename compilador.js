@@ -2,8 +2,8 @@ const fs = require("fs");
 
 function tokenizacao() {
   try {
-    const reservedWords = ["if", "for", "in"];
-    const operators = ["=", "==", "<", ">", ">=", "<=", "+"];
+    const reservedWords = ["if", "for", "in", "or", "while"];
+    const operators = ["=", "==", "<", ">", ">=", "<=", "+", "+="];
     const delimiters = [":"];
     const separators = [","];
     const sourceCode = fs
@@ -18,6 +18,7 @@ function tokenizacao() {
     let tabChecker = 0;
     let arrayChecker = 0;
     let funcChecker = 0;
+    let parenthesesCheck = 0;
     sourceCode.forEach((line, lineNumber) => {
       let arrayErrorIndex = 0;
       const breakedLine = line.split(" ");
@@ -43,13 +44,19 @@ function tokenizacao() {
             buffer += "<NUM>";
             break;
 
-          case (column.match(/'/gi) || []).length > 0:
-            if (column.match(/'/gi || []).length === 1) {
+          case (column.match(/'|"/gi) || []).length > 0:
+            if (column.match(/'|"/gi || []).length === 1) {
               throw new Error(
                 `Expected ' at line ${lineNumber + 1} token ${columnNumber + 1}`
               );
             }
             buffer += "<STR>";
+            break;
+
+          case column === "(":
+            buffer += "<(>";
+            parenthesesCheck++;
+            arrayErrorIndex = columnNumber;
             break;
 
           case (column.match(/\(/gi) || []).length > 0:
@@ -59,8 +66,13 @@ function tokenizacao() {
             break;
 
           case column === ")":
-            buffer += "<FUNCEND>";
-            funcChecker--;
+            if (funcChecker !== 0) {
+              buffer += "<FUNCEND>";
+              funcChecker--;
+            } else {
+              buffer += "<)>";
+              parenthesesCheck--;
+            }
             arrayErrorIndex = columnNumber;
             break;
 
@@ -101,11 +113,11 @@ function tokenizacao() {
       }
 
       if (funcChecker !== 0) {
-        throw new Error(
-          `Error in function at line ${lineNumber + 1} token ${
-            arrayErrorIndex + 1
-          }`
-        );
+        throw new Error(`Error in function at line ${lineNumber + 1} `);
+      }
+
+      if (parenthesesCheck !== 0) {
+        throw new Error(`Expected parentheses at line ${lineNumber + 1} `);
       }
       buffer += "\n";
     });
