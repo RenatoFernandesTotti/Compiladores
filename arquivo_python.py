@@ -1,3 +1,15 @@
-b = 4
-leticiavigna = 'iguinho'
-if b < 3 :
+n = int( input( "Que_termo_deseja_encontrar:" ) )
+ultimo = 1
+penultimo = 1
+
+
+if ( n == 1 )  or ( n == 2 ) :
+    print( '1' )
+else :
+    count = 3
+    while count <= n :
+        termo = ultimo + penultimo
+        penultimo = ultimo
+        ultimo = termo
+        count += 1
+    print( termo ) 

@@ -2,8 +2,8 @@ const fs = require("fs");
 
 function tokenizacao() {
   try {
-    const reservedWords = ["if", "for", "in", "or", "while"];
-    const operators = ["=", "==", "<", ">", ">=", "<=", "+", "+="];
+    const reservedWords = ["if", "for", "in", "while"];
+    const operators = ["=", "==", "<", ">", ">=", "<=", "+", "+=", "and", "or"];
     const delimiters = [":"];
     const separators = [","];
     const sourceCode = fs
@@ -12,13 +12,13 @@ function tokenizacao() {
       })
       .toString()
       .split("\n");
-    //.filter((line) => line);
 
     let buffer = "";
     let tabChecker = 0;
     let arrayChecker = 0;
     let funcChecker = 0;
     let parenthesesCheck = 0;
+    let shouldCloseFunc = [];
     sourceCode.forEach((line, lineNumber) => {
       let arrayErrorIndex = 0;
       const breakedLine = line.split(" ");
@@ -56,17 +56,19 @@ function tokenizacao() {
           case column === "(":
             buffer += "<(>";
             parenthesesCheck++;
+            shouldCloseFunc.push(false);
             arrayErrorIndex = columnNumber;
             break;
 
           case (column.match(/\(/gi) || []).length > 0:
             buffer += "<FUNC><FUNCINIT>";
             funcChecker++;
+            shouldCloseFunc.push(true);
             arrayErrorIndex = columnNumber;
             break;
 
           case column === ")":
-            if (funcChecker !== 0) {
+            if (shouldCloseFunc.shift()) {
               buffer += "<FUNCEND>";
               funcChecker--;
             } else {
